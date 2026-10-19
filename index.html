@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مساعد z3z3 الذكي</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 600px;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 80vh;
+        }
+        .chat-box {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 15px;
+            background: #fafafa;
+        }
+        .message {
+            margin: 8px 0;
+            padding: 10px 14px;
+            border-radius: 8px;
+            max-width: 80%;
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+        .user-message {
+            background-color: #007bff;
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        .ai-message {
+            background-color: #e9ecef;
+            color: #333;
+            align-self: flex-start;
+        }
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        button {
+            padding: 12px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <h2>المساعد الذكي (teze)</h2>
+    <div class="chat-box" id="chatBox">
+        <div class="message ai-message">أهلاً بك! أنا جاهز للإجابة عبر ذكاء z3z3 الاصطناعي.</div>
+    </div>
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="اكتب سؤالك هنا..." onkeydown="if(event.key==='Enter') sendMessage()">
+        <button onclick="sendMessage()">إرسال</button>
+    </div>
+</div>
+
+<script>
+async function sendMessage() {
+    const inputField = document.getElementById("userInput");
+    const chatBox = document.getElementById("chatBox");
+    const userText = inputField.value.trim();
+
+    if (userText === "") return;
+
+    appendMessage(userText, "user-message");
+    inputField.value = "";
+
+    const loadingMessage = appendMessage("جاري التفكير عبر teze...", "ai-message");
+
+    try {
+        // إرسال السؤال إلى الخادم المحلي
+        const response = await fetch('http://localhost:3000/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message: userText })
+        });
+
+        const data = await response.json();
+        if (data.reply) {
+            loadingMessage.innerText = data.reply;
+        } else {
+            loadingMessage.innerText = "حدث خطأ من الخادم، تأكد من مفتاح الـ API.";
+        }
+    } catch (error) {
+        loadingMessage.innerText = "تعذر الاتصال بالخادم المحلي. تأكد من تشغيل node server.js في الـ Terminal.";
+        console.error(error);
+    }
+
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function appendMessage(text, className) {
+    const chatBox = document.getElementById("chatBox");
+    const messageDiv = document.createElement("div");
+    messageDiv.className = `message ${className}`;
+    messageDiv.innerText = text;
+    chatBox.appendChild(messageDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    return messageDiv;
+}
+</script>
+</body>
+</html>
